@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
-
-namespace currency_exchange_api_core.Models
+﻿namespace currency_exchange_api_core.Models
 {
     public class NbpTable
     {
@@ -9,7 +7,8 @@ namespace currency_exchange_api_core.Models
         public string? code { get; set; }
         public string? no { get; set; }
         public string? effectiveDate { get; set; }
-        public List<RateModel>? rates { get; set; }
+        public List<RateModel> rates { get; set; } = new();
+        public string? flagUrl { get; set; }
     }
 
     public class RateModel
@@ -18,8 +17,9 @@ namespace currency_exchange_api_core.Models
         public string? code { get; set; }
         public string? no { get; set; }
         public string? effectiveDate { get; set; }
-        public double mid { get; set; }
-        public double bid { get; set; }
-        public double ask { get; set; }
+        public decimal mid { get; set; }
+        public decimal bid { get; set; }
+        public decimal ask { get; set; }
+        public string? flagUrl { get; set; }
     }
 }

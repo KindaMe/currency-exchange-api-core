@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace currency_exchange_api_core.Models;
 
@@ -15,7 +13,9 @@ public partial class CurrencyExchangeApiDbContext : DbContext
     {
     }
 
-    public virtual DbSet<GlobalSetting> GlobalSettings { get; set; }
+    public virtual DbSet<Conversion> Conversions { get; set; }
+
+    public virtual DbSet<Cut> Cuts { get; set; }
 
     public virtual DbSet<Transaction> Transactions { get; set; }
 
@@ -28,35 +28,67 @@ public partial class CurrencyExchangeApiDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<GlobalSetting>(entity =>
+        modelBuilder.Entity<Conversion>(entity =>
         {
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.BuyPercentageCut)
+            entity.Property(e => e.AmountAfter)
+                .HasColumnType("decimal(18, 8)")
+                .HasColumnName("amount_after");
+            entity.Property(e => e.AmountBefore)
+                .HasColumnType("decimal(18, 8)")
+                .HasColumnName("amount_before");
+            entity.Property(e => e.CurrencyAfter)
+                .HasMaxLength(3)
+                .HasColumnName("currency_after");
+            entity.Property(e => e.CurrencyBefore)
+                .HasMaxLength(3)
+                .HasColumnName("currency_before");
+            entity.Property(e => e.Order).HasColumnName("order");
+            entity.Property(e => e.Rate)
+                .HasColumnType("decimal(18, 8)")
+                .HasColumnName("rate");
+            entity.Property(e => e.TransactionId).HasColumnName("transaction_id");
+
+            entity.HasOne(d => d.Transaction).WithMany(p => p.Conversions)
+                .HasForeignKey(d => d.TransactionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Conversions_Transactions");
+        });
+
+        modelBuilder.Entity<Cut>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_GlobalSettings");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.BuyPercentage)
                 .HasColumnType("decimal(18, 2)")
-                .HasColumnName("buy_percentage_cut");
-            entity.Property(e => e.SellPercentageCut)
+                .HasColumnName("buy_percentage");
+            entity.Property(e => e.EffectiveDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("effective_date");
+            entity.Property(e => e.SellPercentage)
                 .HasColumnType("decimal(18, 2)")
-                .HasColumnName("sell_percentage_cut");
+                .HasColumnName("sell_percentage");
         });
 
         modelBuilder.Entity<Transaction>(entity =>
         {
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.AmountIn)
-                .HasColumnType("decimal(18, 2)")
-                .HasColumnName("amount_in");
-            entity.Property(e => e.CurrencyIn)
-                .HasMaxLength(3)
-                .HasColumnName("currency_in");
             entity.Property(e => e.Date).HasColumnName("date");
-            entity.Property(e => e.RateIn)
-                .HasColumnType("decimal(18, 10)")
-                .HasColumnName("rate_in");
-            entity.Property(e => e.WalletId).HasColumnName("wallet_id");
+            entity.Property(e => e.Type)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("type");
+            entity.Property(e => e.WalletFromId).HasColumnName("wallet_from_id");
+            entity.Property(e => e.WalletToId).HasColumnName("wallet_to_id");
 
-            entity.HasOne(d => d.Wallet).WithMany(p => p.Transactions)
-                .HasForeignKey(d => d.WalletId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+            entity.HasOne(d => d.WalletFrom).WithMany(p => p.TransactionWalletFroms)
+                .HasForeignKey(d => d.WalletFromId)
+                .HasConstraintName("FK_Transactions_Wallets1");
+
+            entity.HasOne(d => d.WalletTo).WithMany(p => p.TransactionWalletTos)
+                .HasForeignKey(d => d.WalletToId)
                 .HasConstraintName("FK_Transactions_Wallets");
         });
 
@@ -69,6 +101,9 @@ public partial class CurrencyExchangeApiDbContext : DbContext
             entity.Property(e => e.FirstName)
                 .HasMaxLength(50)
                 .HasColumnName("first_name");
+            entity.Property(e => e.IsActive)
+               .HasDefaultValue((byte)1)
+               .HasColumnName("is_active");
             entity.Property(e => e.LastName)
                 .HasMaxLength(50)
                 .HasColumnName("last_name");
@@ -80,10 +115,6 @@ public partial class CurrencyExchangeApiDbContext : DbContext
         modelBuilder.Entity<Wallet>(entity =>
         {
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Balance)
-                .HasComputedColumnSql("([dbo].[GetTotalTransactionValue]([id]))", false)
-                .HasColumnType("decimal(18, 2)")
-                .HasColumnName("balance");
             entity.Property(e => e.Currency)
                 .HasMaxLength(3)
                 .HasColumnName("currency");

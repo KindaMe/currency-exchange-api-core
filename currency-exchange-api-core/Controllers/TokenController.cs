@@ -1,4 +1,5 @@
-﻿using currency_exchange_api_core.Models;
+﻿using currency_exchange_api_core.DTOs;
+using currency_exchange_api_core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,7 +20,7 @@ namespace currency_exchange_api_core.Controllers
         }
 
         [HttpPost]
-        public IActionResult Authenticate([FromBody] UserCredentials userCredentials)
+        public IActionResult Authenticate([FromBody] UserCredentialsDTO userCredentials)
         {
             if (userCredentials == null || string.IsNullOrEmpty(userCredentials.Email) || string.IsNullOrEmpty(userCredentials.Password))
             {

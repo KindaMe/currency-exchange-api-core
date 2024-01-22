@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace currency_exchange_api_core.Models;
+﻿namespace currency_exchange_api_core.Models;
 
 public partial class User
 {
@@ -14,6 +11,8 @@ public partial class User
     public string Email { get; set; } = null!;
 
     public string Password { get; set; } = null!;
+
+    public byte IsActive { get; set; }
 
     public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
 }
